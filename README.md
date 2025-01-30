@@ -268,7 +268,9 @@ a data track.
 
 ### Reed-Solomon
 The C1 and C2 codes in the data stream are Reed-Solomon error correcting
-codes. C2 is a (28,24) code, while C1 is a (32,28) code. See the
+codes. C2 is a (28,24) code, covering 12 bytes of data, for 4 bytes of
+recovery bytes, while C1 is a (32,28) code, covering 16 bytes of data,
+for 4 bytes of recovery bytes. See the
 [Reed–Solomon codes for coders](https://en.wikiversity.org/wiki/Reed%E2%80%93Solomon_codes_for_coders)
 wikiversity page for more information about error correcting codes,
 Galois fields, and Reed Solomon.
@@ -278,11 +280,19 @@ Several important details:
 order to make sense, and correcting C1 first may very well silence C2
 problems. But either can theorically be done in any order to correct
 data, and one or the other showing up in the DSP diagnostics doesn't
-really have any indication in the gravity of the problems. If anything,
-since C1 and C2 have different delayed patterns, they will cover
+really have any indication in the gravity of the problems.
+ - C1 and C2 do not cover the same data bytes, as they do not have the
+same delayed patterns to gather their data. As such, they will help cover
 different shapes of scratches on the disc.
  - C2 has its correcting bytes in the middle of the data it's covering.
 This means the typical barrel-shifter Reed Solomon encoder will not
 work, as it will place the correcting data at the end. So while encoding
 C1 can be done using either typical method for Reed-Solomon, C2 needs
-to use a matrix multiplication to be calculated.
+to use a matrix multiplication to be calculated. The reasoning for C2
+to be in the middle of the data line is to be more equidistant from C1
+in terms of data frequency, to better cover scratches and holes.
+ - Theoretically, Reed Solomon can correct only 2 bytes when 4 recovery
+bytes have been used, but since the EFM encoder can also detect invalid
+sequences of bits, this is an added information sent to the Reed Solomon
+decoder known as "erasures", and can end up correcting more bytes as
+a result.
