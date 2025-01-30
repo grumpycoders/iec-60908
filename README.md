@@ -95,3 +95,10 @@ has debugging pins with the raw NRZ-I encoded bistream, and the recovered
 clock, named "ASYO" and "XPLCK" respectively:
 
 ![A picture of a PS1 motherboard, with the debug pads for the pins ASYO and XPLCK marked.](images/dsp-pinout.png)
+
+Capturing these two signals, and processing the data to decode the bitstream
+according to the recovered clock from the DSP yields a much better picture:
+
+![A straight pattern of bits, with obvious repetitions.](images/cropped-bitstream.png)
+
+A fuller version of the above can be obtained [here](images/bitstream.png).
