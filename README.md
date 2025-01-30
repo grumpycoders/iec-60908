@@ -15,6 +15,12 @@ knowledge, and having better tools to not only read, but recreate
 the information from such medium is a step forward in archival
 efforts.
 
+This documentation doesn't really go much into upper level details such
+as the format of data sectors, format of subchannels, or filesystem
+information, the format of the table of contents, or the way the
+audio data is stored, as these are fully and often properly
+documented in other places. Only relevant portions will be mentioned.
+
 ## Pits and grooves
 The surface of a compact disc is covered in microscopic holes, which
 form a series of pits and grooves, also known as pits and lands.
@@ -156,4 +162,127 @@ EFM symbol with a different color, we can obtain the following picture:
 On this picture, the 24-bits sync pattern is aligned completely to the
 left, the merge bits columns are in gray, and all of the 33 EFM symbols
 are presented with different colors, depending of their meaning, which
-we will discuss later.
+we will discuss now.
+
+### Subchannel
+The first EFM symbol of a frame is for the subchannel. The subchannel is
+a piece of data which is often misunderstood, and needs some special 
+detailing to properly clarify what is going on here.
+
+When reading subchannel information from a high level perspective, aka
+by talking to a CD-Rom drive using the ATAPI protocol, subchannel
+information will come in the form of a maximum of 96 bytes per burst.
+
+The subchannel is composed of 8 columns, named P to W. The full meaning
+of all these columns is documented in the
+[Red Book](https://github.com/suvozy/CD-Copy-protect), and aren't totally
+useful for the purpose of this documentation. We can summarize the
+information by saying the following:
+ - P is either 96 bits of 0s, or 96 bits of 1s,
+and give rough information about where in the disc we are, in terms of
+being in lead-in, lead-out, or pre-gaps.
+ - Q is some side-channel metadata, usually indicating what is the
+current location of roughly the data this subchannel is.
+
+Since subchannels are 96 bytes long, the top 2 subchannels symbols are
+special symbols, called S0 and S1, which indicate the beginning of a
+subchannel 96-bytes stream.
+
+Aside from these two special EFM symbols every 98 frames, every other
+symbol found in the bitstream, when well-formed, will be one out of
+256 values, directly mapping to bytes.
+
+One important piece of information from this is the subchannel stream
+is treated as a side channel for the purpose of data transfer end-to-end.
+What this means is that the S0/S1 symbols only indicate the beginning
+of a subchannel stream, and has no relationship with the actual data
+in the frame.
+
+### Data
+As explained just above, the remaining 32 symbols in a frame are always
+bytes, and can now be referred to as such.
+
+These 32 bytes are organized as such:
+ - 12 bytes of payload data.
+ - 4 bytes of error correcting code, called C2.
+ - 12 bytes of payload data.
+ - 4 bytes of error correcting code, called C1.
+
+However, and this is really the complex part of the whole CIRC encoder
+here, the data isn't stored linearly. This is going to be very difficult
+to explain properly, but also, it doesn't necessarily represent a huge
+deal implementation-wise.
+
+Basically, the stream of frames can be seen as 32 columns with an
+infinite number of lines. When starting to read a frame from the first
+column, the reader needs to read in the past buffer following an
+upward zig-zag pattern.
+
+In other words, while one frame is organized in the form of 12-4-12-4
+bytes, they are in relation to each other not linearly in the frames
+stream, but following this zig-zag pattern.
+
+Worse: the C1 and C2 error correction code are correcting values for
+bytes that are from a _different_ zig-zag pattern. Gathering the list
+of bytes for C1 and C2 isn't the same mechanism as gathering the list
+of bytes for the actual payload in a given frame, and the correction of
+bytes throughout the buffer by the DSP using C1 and C2 is done
+asynchronously from the processing of the data itself.
+
+Finally, there is no sector delimitation. This is a very important
+part of the whole specification. The data is an infinite stream of bytes,
+which is played back at the rate of 176400 bytes per second at 1x
+speed. The presence of a subchannel which sometimes indicates sector
+positions through the Q column doesn't actually delimitate anything. The
+zig-zag delayed pattern as described above may begin at any point from
+the original stream, and isn't a fixed value from one burner to another.
+
+This is very relevant when processing data sectors. The first 16 bytes
+of a data sector are as follow:
+ - 12 bytes of a "sync" pattern, looking like this:
+`00 ff ff ff ff ff ff ff ff ff ff 00`
+ - 3 bytes of MSF position.
+ - 1 byte of sector mode.
+
+This 16 bytes header serves two purposes for the DSP:
+ - Locate the beginning of a data sector.
+ - Knowing the exact address of said sector, as the subchannel information
+is unreliable at best.
+
+Audio sectors having strictly no such information, it is impossible and
+pointless to try to deterministically split them into sectors.
+
+A few ways one can verify this:
+ - Using different CD-R writers to write the same audio stream, and
+read it back using the dumping method above. The measured drift will
+be different from one master disc to another. Worse: the drift may
+even happen _per column_, meaning the start of a sector may effectively
+be in column 2, or column 16, or column 20, depending on the strategy
+used by the CD-R writer.
+ - Some audio discs available in retail have been badly mastered, and
+contain [RIFF](https://en.wikipedia.org/wiki/Resource_Interchange_File_Format)
+headers from their original [.wav](https://en.wikipedia.org/wiki/WAV)
+files. Said headers can be seen in known dumps as being in the middle
+of a so-called "audio sector", even after it was appearing after
+a data track.
+
+### Reed-Solomon
+The C1 and C2 codes in the data stream are Reed-Solomon error correcting
+codes. C2 is a (28,24) code, while C1 is a (32,28) code. See the
+[Reed–Solomon codes for coders](https://en.wikiversity.org/wiki/Reed%E2%80%93Solomon_codes_for_coders)
+wikiversity page for more information about error correcting codes,
+Galois fields, and Reed Solomon.
+
+Several important details:
+ - C1 covers C2. This means that a DSP will correct errors in a specific
+order to make sense, and correcting C1 first may very well silence C2
+problems. But either can theorically be done in any order to correct
+data, and one or the other showing up in the DSP diagnostics doesn't
+really have any indication in the gravity of the problems. If anything,
+since C1 and C2 have different delayed patterns, they will cover
+different shapes of scratches on the disc.
+ - C2 has its correcting bytes in the middle of the data it's covering.
+This means the typical barrel-shifter Reed Solomon encoder will not
+work, as it will place the correcting data at the end. So while encoding
+C1 can be done using either typical method for Reed-Solomon, C2 needs
+to use a matrix multiplication to be calculated.
