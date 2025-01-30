@@ -93,3 +93,5 @@ has to do when decoding a bitstream. It turns out that the DSP of a
 [PlayStation console](https://en.wikipedia.org/wiki/PlayStation_(console))
 has debugging pins with the raw NRZ-I encoded bistream, and the recovered
 clock, named "ASYO" and "XPLCK" respectively:
+
+![A picture of a PS1 motherboard, with the debug pads for the pins ASYO and XPLCK marked.](images/dsp-pinout.png)
