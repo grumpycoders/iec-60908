@@ -48,7 +48,7 @@ the discussion are:
 Doing some math on this yields the following important property:
  - At 1x speed, an audio sector lasts for 1/75th of a second.
  - At 588 bits per frame, 98 frames per sector, this gives us:
-   - 588 * 98 * 75 = 4321800 bits per second.
+   - $`588 * 98 * 75 = 4321800`$ bits per second.
 
 This means that the bitstream read from the disc when it's playing
 at 1x speed can be seen as a 4.3218Mhz data stream. Any other
@@ -64,6 +64,11 @@ disc yields the following result when sampling at exactly
 ![A wavy pattern of bits, with obvious repetitions.](images/cropped-skewed-bitstream.png)
 
 A fuller version of the above can be obtained [here](images/skewed-bitstream.png).
+Each 1 is represented as a black pixel, and each 0 is represented
+as a white pixel. While this is a 2D picture, it represents the input
+data which is really just a bitstream. By arranging them in groups
+of 588 bits, we can better see the arrangement of the data frame by
+frame.
 
 Several things to note there:
  - Some data patterns emerge. We will talk more about them a bit later.
@@ -71,6 +76,8 @@ Several things to note there:
  - The data captured at exactly 4.3218Mhz is "wavy". This is caused
 by the physical aspect of the drive, which has a motor running off a
 PWM, using an internal feedback loop.
+ - This also means that each line isn't perfectly one frame, but only
+an approximation thereof.
  - The DSP responsible for decoding the bistream will be the one:
    - Creating an actual clock rate to decode the input properly.
    - Managing the PWM of the motor, in order to provide an acceptable
@@ -102,3 +109,31 @@ according to the recovered clock from the DSP yields a much better picture:
 ![A straight pattern of bits, with obvious repetitions.](images/cropped-bitstream.png)
 
 A fuller version of the above can be obtained [here](images/bitstream.png).
+
+## Data interpretation
+Once we have the bitstream from the pits and gooves as described above,
+we can start interpreting the data according to the documentation.
+
+The EFM encoder maps 258 symbols into a fourteen bits structure, which
+follows the constrains explained above regarding the amount of 0s
+between 1s. 256 of these symbols directly map to bytes, and two of these
+symbols are used to indicate submarkers. These two symbols are called
+S0 and S1, and we'll talk about them a bit later. The word "EFM" means
+"Eight-to-Fourteen Modulation".
+
+### Composition of a frame
+Each 588 bits frame begins with a very specific 24-bits sync pattern,
+which can not collide with any of the 258 EFM symbols, while still
+respecting the 0s-to-1s bitstream ratio. This sync pattern is
+100000000001000000000010, and is very visible in the various captures
+from above. In the [straightened capture](images/cropped-bitstream.png),
+this is the vertical clear lines on the right of the picture.
+
+Each frame contains 33 symbols which, when properly formed, are one of
+the 258 defined EFM symbols. Each symbol is 11 bits long. And finally,
+each symbol as well as the 24-bits sync pattern is separated from each
+other using 3 "merge bits".
+
+This math goes back to what was explained before: 24 bits of sync pattern,
+33 symbols of 14 bits, 34 merge bits which are 3 bits long, means we have
+$`24 + 33 * 14 + 34 * 3 = 588`$ bits per frame.
