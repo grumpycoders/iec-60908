@@ -137,3 +137,23 @@ other using 3 "merge bits".
 This math goes back to what was explained before: 24 bits of sync pattern,
 33 symbols of 14 bits, 34 merge bits which are 3 bits long, means we have
 $`24 + 33 * 14 + 34 * 3 = 588`$ bits per frame.
+
+The point of the merge bits is to properly support the 0-to-1 balance
+imposed by the specification. Since some EFM symbols end or begin with 1s,
+without the merge bits, they may violate the minimum distance between
+two 1s. This means constructing a merge bit sequence involves knowing
+the last 2 bits, and the next 2 bits of the bitstream. As a result,
+it is a lot more practical to write merge bits before writing a symbol
+to the bitstream, instead of after, since it's easier to remember what
+the last two bits were, instead of trying to oracle what the next two
+bits will be. This will be discussed in more details later.
+
+If we align the frames starting from the sync pattern, and colorize each
+EFM symbol with a different color, we can obtain the following picture:
+
+![A colorized bitstream from the pits and grooves.](images/colorized.png)
+
+On this picture, the 24-bits sync pattern is aligned completely to the
+left, the merge bits columns are in gray, and all of the 33 EFM symbols
+are presented with different colors, depending of their meaning, which
+we will discuss later.
