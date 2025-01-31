@@ -1,5 +1,7 @@
 #!/bin/sh
+npm i
 gcc -o generate-test-patterns generate-test-patterns.c -O3
+./generate-test-patterns
 
 node index.js -v -i test1.raw -e test1.txt -t > test1-encoding.log
 node index.js -v -i test2.raw -e test2.txt -t > test2-encoding.log
