@@ -1,0 +1,11 @@
+node_modules/
+package-lock.json
+generate-test-patterns
+*.raw
+*.efm
+*.csv
+*.txt
+*.bit
+*.png
+*.log
+*.bin

@@ -198,6 +198,10 @@ What this means is that the S0/S1 symbols only indicate the beginning
 of a subchannel stream, and has no relationship with the actual data
 in the frame.
 
+Last but not least, the table of contents of a CD is stored in the
+subchannel. It is a special pattern of subQ data which is repeated
+over and over during the lead-in of a disc.
+
 ### Data
 As explained just above, the remaining 32 symbols in a frame are always
 bytes, and can now be referred to as such.
@@ -256,6 +260,9 @@ This 16 bytes header serves two purposes for the DSP:
  - Locate the beginning of a data sector.
  - Knowing the exact address of said sector, as the subchannel information
 is unreliable at best.
+ - Note that the data payload of a sector is 2340 bytes, excluding the
+sync pattern, and the specification mandates that the data payload is
+scrambled, meaning it is xorred with a pseudo-random sequence of bytes.
 
 Audio sectors having strictly no such information, it is impossible and
 pointless to try to deterministically split them into sectors.
