@@ -229,10 +229,18 @@ of bytes for the actual payload in a given frame, and the correction of
 bytes throughout the buffer by the DSP using C1 and C2 is done
 asynchronously from the processing of the data itself.
 
+When stored into a frame, C1 and C2 are inverted, meaning they are
+xored with 0xff. Note that C1 is computed with C2's data _before_ the
+inversion. As the ECC of a message full of zeroes is zero, this means
+that the C1 and C2 error correcting codes are also zero when the data
+itself is zero. In other words, a fully silent section of frames will
+have all of its data bytes set to zero, and all of its C1 and C2 bytes
+set to 0xff.
+
 Finally, there is no sector delimitation. This is a very important
 part of the whole specification. The data is an infinite stream of bytes,
 which is played back at the rate of 176400 bytes per second at 1x
-speed. The presence of a subchannel which sometimes indicates sector
+speed. The presence of a subchannel which sometimes indicates MSF
 positions through the Q column doesn't actually delimitate anything. The
 zig-zag delayed pattern as described above may begin at any point from
 the original stream, and isn't a fixed value from one burner to another.
@@ -262,9 +270,13 @@ used by the CD-R writer.
  - Some audio discs available in retail have been badly mastered, and
 contain [RIFF](https://en.wikipedia.org/wiki/Resource_Interchange_File_Format)
 headers from their original [.wav](https://en.wikipedia.org/wiki/WAV)
-files. Said headers can be seen in known dumps as being in the middle
-of a so-called "audio sector", even after it was appearing after
-a data track.
+files. Said headers can be sometimes seen in known dumps as being in
+the middle of a so-called "audio sector", even after it was appearing
+after a data track, instead of being at exactly offset 0 or 150 sectors.
+ - However, all of the discs manufactured by the same company, using the
+same mastering devices, will have the same drift between the subchannel
+sync symbols and the actual data, so care must be taken to select discs
+from different manufacturers to verify this.
 
 ### Reed-Solomon
 The C1 and C2 codes in the data stream are Reed-Solomon error correcting
@@ -291,8 +303,13 @@ C1 can be done using either typical method for Reed-Solomon, C2 needs
 to use a matrix multiplication to be calculated. The reasoning for C2
 to be in the middle of the data line is to be more equidistant from C1
 in terms of data frequency, to better cover scratches and holes.
+ - When locating and correcting errors, Reed Solomon no longer has
+concepts of which bytes are from the initial message, and which are
+from the error correcting code. This means that, despite being in a
+different location in the frame, the C1 and C2 codes are decoded and
+corrected using the same exact algorithm.
  - Theoretically, Reed Solomon can correct only 2 bytes when 4 recovery
-bytes have been used, but since the EFM encoder can also detect invalid
+bytes have been used, but since the EFM decoder can also detect invalid
 sequences of bits, this is an added information sent to the Reed Solomon
 decoder known as "erasures", and can end up correcting more bytes as
 a result.
