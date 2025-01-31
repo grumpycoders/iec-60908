@@ -151,7 +151,7 @@ from above. In the [straightened capture](images/cropped-bitstream.png),
 this is the vertical clear lines on the right of the picture.
 
 Each frame contains 33 symbols which, when properly formed, are one of
-the 258 defined EFM symbols. Each symbol is 11 bits long. And finally,
+the 258 defined EFM symbols. Each symbol is 14 bits long. And finally,
 each symbol as well as the 24-bits sync pattern is separated from each
 other using 3 "merge bits".
 
