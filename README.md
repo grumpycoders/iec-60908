@@ -7,6 +7,16 @@ very real challenge to anyone trying to make heads or tails of how
 the data is organized on the disc, and even less how to generate
 said data stream.
 
+Some other efforts exists, but probably not to the extend of
+containing a proper, working encoder.
+
+Such other efforts include https://github.com/sidneycadot/Laser2Wav
+and https://github.com/carrotIndustries/redbook and the former
+has been fundational to the work done here. As such, it probably
+constitutes a first mandatory read, before proceeding to the rest
+of this documentation. We will try however to rephrase and reorganize
+the information from it.
+
 This repository is a collection of research notes and tools, aiming
 at grounding the mathematics behind all this into actionable code
 and knowledge. [Disc rot](https://en.wikipedia.org/wiki/Disc_rot)
@@ -20,6 +30,11 @@ as the format of data sectors, format of subchannels, or filesystem
 information, the format of the table of contents, or the way the
 audio data is stored, as these are fully and often properly
 documented in other places. Only relevant portions will be mentioned.
+
+Last but not least, this documentation, code, and associated tests
+and experiments have been written over the span of several years.
+The first working iteration of the bitstream decoder alongside
+some of the captures and tests were done circa 2020.
 
 ## Pits and grooves
 The surface of a compact disc is covered in microscopic holes, which
@@ -325,3 +340,92 @@ bytes have been used, but since the EFM decoder can also detect invalid
 sequences of bits, this is an added information sent to the Reed Solomon
 decoder known as "erasures", and can end up correcting more bytes as
 a result.
+
+### Delayed patterns and swizzle
+The way the data is organized is very messy in terms of look up tables,
+delays, and other factors. There is a page in the redbook with all
+of the delays and swizzling, and reproducing it here would be pointless,
+because we want to actually understand it in the terms of code.
+
+The [read-bits.js](code/model/read-bits.js) file is a tool which can
+decode a bitstream, and output the data in a more human-readable format,
+while emitting a vast amount of debugging information. Running some
+of the tests there can properly show the delays and swizzling, especially
+when checking the files test2 and test3, which show the delayed patterns
+by lines and columns. The script itself is heavily commented, and should
+provide a good understanding of the delays and swizzling when decoding.
+
+See the [run-test.sh](code/model/run-test.sh) script for more information.
+
+## Encoding
+The [write-bits.js](code/model/index.js) file is a tool which can generate
+a bitstream from a given input file. It is heavily commented, and is written
+in a very academic fashion, in order to explain the process as clearly as
+possible.
+
+The output of the tool has successfully been tested against the
+[read-bits.js](code/model/read-bits.js) decoder, as well as a real hardware
+DSP by injecting the bitstream into the amplifier circuit of a CD player,
+effectively replacing the lens with a wire connected to a simple
+electronic circuit.
+
+### Strategy
+Reading the decoder tool yields some information about the general data
+structure, but the actual encoding process isn't strictly a mirror
+image of the decoding process. The main reason for this is the delay
+lines imposed by the format.
+
+Writing a fully mirrored encoder is totally possible, but would
+result in a very delayed output, and would be very difficult to
+stop and resume. The amount of buffered data would be very large
+that is, and the goal here is to be able to generate a bitstream
+in real time, while being able to stop and resume at any time after
+a seek for instance.
+
+This means that each byte of the output stream will be generated
+one after the other. When it comes to the data payloads, it simply
+means grabbing them from the input buffer according to the delayed
+patterns, but when it comes to the C1 and C2 codes, it means we
+have delays upon delays. As a result, the encoder is computing
+C1 and C2 several times, as the 4 recovery bytes are otherwise
+basically stored in diagonal into the output buffer.
+
+The alternative to this whole thing would be to write the
+output data into a big ring buffer, in a swizzled and delayed pattern,
+which would mean additional delays into the whole encoder process.
+
+### Seeking and erasures
+When reading a Compact Disc, the DSP will behaves as if it's reading
+an infinite bitstream of data. The reason for lead-in, lead-out,
+and pre-gaps, is to provide a way for the encoder and decoder to
+properly transition from one data stream to another, without the
+various delay lines getting in the way.
+
+However, if we are generating a bitstream on the fly and in real time,
+we will need to trick the DSP into thinking it is reading an infinite
+bitstream of data, especially after it has been seeking.
+
+One potential method to do this is to insert erasures into the bitstream.
+Any data beyond the beginning of the buffer we want to send ought to
+be erased, using EFM symbols which are still 14-bits long, but doesn't
+correspond to any valid EFM symbol. This will cause the DSP to
+consider these bytes as being faulty, and will emit errors, but
+generally speaking, this ought to be expected when seeking. This theory
+hasn't been tested yet, but it is a potential solution to having to
+insert a lot of data into the bitstream right after a seek.
+
+The erasure symbol used in the [emf.js](code/model/efm.js) file is
+`10001000000000`, which is a 14-bits long symbol according to the
+0-to-1 ratio rule, but doesn't correspond to any valid EFM symbol.
+
+The full list of such other potential symbols is:
+
+ - 00000000001000
+ - 00000000001001
+ - 00000000010000
+ - 00000000010001
+ - 00001000000000
+ - 00010000000000
+ - 01001000000000
+ - 10001000000000
+ - 10010000000000
