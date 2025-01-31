@@ -7,12 +7,12 @@ very real challenge to anyone trying to make heads or tails of how
 the data is organized on the disc, and even less how to generate
 said data stream.
 
-Some other efforts exists, but probably not to the extend of
+Some other efforts exist, but probably not to the extent of
 containing a proper, working encoder.
 
 Such other efforts include https://github.com/sidneycadot/Laser2Wav
 and https://github.com/carrotIndustries/redbook and the former
-has been fundational to the work done here. As such, it probably
+has been foundational to the work done here. As such, it probably
 constitutes a first mandatory read, before proceeding to the rest
 of this documentation. We will try however to rephrase and reorganize
 the information from it.
@@ -39,7 +39,7 @@ some of the captures and tests were done circa 2020.
 ## Pits and grooves
 The surface of a compact disc is covered in microscopic holes, which
 form a series of pits and grooves, also known as pits and lands.
-While this is well know, and the internet has lots of research showing
+While this is well known, and the internet has lots of research showing
 the surface of a compact disc through a microscope, the way this
 actually translates to data isn't that well documented.
 
@@ -99,11 +99,11 @@ by the physical aspect of the drive, which has a motor running off a
 PWM, using an internal feedback loop.
  - This also means that each line isn't perfectly one frame, but only
 an approximation thereof.
- - The DSP responsible for decoding the bistream will be the one:
+ - The DSP responsible for decoding the bitstream will be the one:
    - Creating an actual clock rate to decode the input properly.
    - Managing the PWM of the motor, in order to provide an acceptable
 general bitrate.
-   - Buffer the decoded data so that the output rate is within
+   - Buffering the decoded data so that the output rate is within
 acceptable tolerances, while speeding up or slowing down the motor
 accordingly.
 
@@ -119,7 +119,7 @@ algorithm to reconstitute an appropriate clock rate.
 However, this is already something that the DSP of a CD player
 has to do when decoding a bitstream. It turns out that the DSP of a
 [PlayStation console](https://en.wikipedia.org/wiki/PlayStation_(console))
-has debugging pins with the raw NRZ-I encoded bistream, and the recovered
+has debugging pins with the raw NRZ-I encoded bitstream, and the recovered
 clock, named "ASYO" and "XPLCK" respectively:
 
 ![A picture of a PS1 motherboard, with the debug pads for the pins ASYO and XPLCK marked.](images/dsp-pinout.png)
@@ -132,7 +132,7 @@ according to the recovered clock from the DSP yields a much better picture:
 A fuller version of the above can be obtained [here](images/bitstream.png).
 
 ## Data interpretation
-Once we have the bitstream from the pits and gooves as described above,
+Once we have the bitstream from the pits and grooves as described above,
 we can start interpreting the data according to the documentation.
 
 The EFM encoder maps 258 symbols into a fourteen bits structure, which
@@ -277,7 +277,7 @@ This 16 bytes header serves two purposes for the DSP:
 is unreliable at best.
  - Note that the data payload of a sector is 2340 bytes, excluding the
 sync pattern, and the specification mandates that the data payload is
-scrambled, meaning it is xorred with a pseudo-random sequence of bytes.
+scrambled, meaning it is xored with a pseudo-random sequence of bytes.
 
 Audio sectors having strictly no such information, it is impossible and
 pointless to try to deterministically split them into sectors.
@@ -288,7 +288,7 @@ read it back using the dumping method above. The measured drift will
 be different from one master disc to another. Worse: the drift may
 even happen _per column_, meaning the start of a sector may effectively
 be in column 4, or column 16, or column 20, depending on the strategy
-used by the CD-R writer. It should be however always be a multiple of 4.
+used by the CD-R writer. It should however always be a multiple of 4.
  - The presence of a data track before the audio tracks can be used to
 re-align the audio sectors, as the data sectors have their own sync
 pattern. For discs that have been written in DAO mode, the audio data
@@ -317,7 +317,7 @@ Galois fields, and Reed Solomon.
 Several important details:
  - C1 covers C2. This means that a DSP will correct errors in a specific
 order to make sense, and correcting C1 first may very well silence C2
-problems. But either can theorically be done in any order to correct
+problems. But either can theoretically be done in any order to correct
 data, and one or the other showing up in the DSP diagnostics doesn't
 really have any indication in the gravity of the problems.
  - C1 and C2 do not cover the same data bytes, as they do not have the
@@ -395,7 +395,7 @@ output data into a big ring buffer, in a swizzled and delayed pattern,
 which would mean additional delays into the whole encoder process.
 
 ### Seeking and erasures
-When reading a Compact Disc, the DSP will behaves as if it's reading
+When reading a Compact Disc, the DSP will behave as if it's reading
 an infinite bitstream of data. The reason for lead-in, lead-out,
 and pre-gaps, is to provide a way for the encoder and decoder to
 properly transition from one data stream to another, without the
@@ -477,7 +477,7 @@ what's needed to keep up with the EFM encoder.
 
 However, this means having enough real estate on an fpga
 to have 6 pipelines of Reed-Solomon encoders, all with
-their associated galois field roms and static matrices.
+their associated Galois field roms and static matrices.
 
 This sort of design results in a huge lot of independent
 ram and rom tiles in a typical FPGA, but it is doable,
