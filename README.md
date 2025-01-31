@@ -287,8 +287,8 @@ A few ways one can verify this:
 read it back using the dumping method above. The measured drift will
 be different from one master disc to another. Worse: the drift may
 even happen _per column_, meaning the start of a sector may effectively
-be in column 2, or column 16, or column 20, depending on the strategy
-used by the CD-R writer.
+be in column 4, or column 16, or column 20, depending on the strategy
+used by the CD-R writer. It should be however always be a multiple of 4.
  - The presence of a data track before the audio tracks can be used to
 re-align the audio sectors, as the data sectors have their own sync
 pattern. For discs that have been written in DAO mode, the audio data
