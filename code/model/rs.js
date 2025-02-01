@@ -84,14 +84,13 @@ exports.encode = function (msg, nsyms) {
 exports.encode_4 = function (msg) {
   const ret = new Array(4).fill(0)
   for (let i = 0; i < msg.length; i++) {
-    const c = msg[i]
-    const q = ret[0]
+    const c = gf.add(msg[i], ret[0])
     ret[0] = ret[1]
     ret[1] = ret[2]
     ret[2] = ret[3]
     ret[3] = 0
     if (c === 0) continue
-    const lc = gf.log(gf.add(c, q))
+    const lc = gf.log(c)
     // The modulo here is only to avoid overflow, as technically the input
     // value to exp should be in the range of 0-255. But if the exponant
     // table is precomputed with 512 values, then this is not needed.
