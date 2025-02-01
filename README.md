@@ -463,12 +463,12 @@ gather 24 bytes of payload scattered throughout the input and
 past buffers, $`24 * 6`$ bytes of payload for the C1 and C2
 computations, and 4 extra bytes of past C2 data for the C1
 computations. This means that the CIRC encoder needs to be able
-to gather a total of $`24 + 24 * 6 + 4 = 168`$ bytes of data
+to gather a total of $`24 + 24 * 6 + 8 = 172`$ bytes of data
 during its operation, as well as compute a total of 6
 Reed-Solomon codes, in under 588 cycles, if it's running
 at the same clock rate as the EFM encoder. At 24x speed,
 this means the CIRC encoder needs to be able to gather
-168 bytes of data every $`588 / (4.3218Mhz * 24) = 5.669 μs`$,
+172 bytes of data every $`588 / (4.3218Mhz * 24) = 5.669 μs`$,
 meaning a bandwidth of roughly 30MB/s of very random access
 pattern. Hopefully, the internal SRAM of a typical FPGA
 is more than fast enough to handle this, but external
@@ -481,7 +481,7 @@ more than 4MB/s of input data, which will fight for the bus
 contention of the CIRC encoder's storage.
 
 In Verilog however, this means that C1 and C2 can be pipelined,
-while the 168 bytes of data can be gathered in parallel. With
+while the 172 bytes of data can be gathered in parallel. With
 roughly 6 cycles needed for a typical single byte of
 Reed-Solomon computation, this means that the encoders can
 all potentially run in a total of 200 cycles, way less than
