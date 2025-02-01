@@ -393,6 +393,46 @@ basically stored in diagonal into the output buffer.
 The alternative to this whole thing would be to write the
 output data into a big ring buffer, in a swizzled and delayed pattern,
 which would mean additional delays into the whole encoder process.
+It certainly would be good to have a second proof of concept encoder
+however, using more ram and delays, but less computation. Anyone
+should feel welcome to submit a pull request for this.
+
+As far as the EFM encoder is concerned, it is a lot simpler. There
+is really only three big steps:
+ - At the beginning of a frame, emit the sync pattern.
+ - For each of the 33 symbols, emit the merge bits, and then
+emit the symbol.
+ - At the end of the frame, emit the merge bits.
+
+The merge bits are 3 bits long, and are computed using the last 2 bits
+and the next 2 bits of the bitstream. We know we can't have less than
+2 bits of 0s between two 1s, so we can be very liberal in adding 1s
+as long as this constraint is respected. Considering all of the possible
+combinations of the last 2 bits and the next 2 bits, the following
+table represents the merge bits we're emitting:
+
+| Last 2 bits  | Merge bits | Next 2 bits  |
+|--------------|------------|--------------|
+| x0           | 010        | 0x           |
+| 01           | 001        | 00           |
+| 00           | 100        | 10           |
+
+This table ensures that we're eagerly emitting 1s whenever possible,
+as it ensures a minimum of 2 bits of 0s between two 1s. Every other
+case ought to be emitting 000, as this would otherwise be a violation
+of the 0-to-1 ratio. Here is a fuller version of the table:
+
+| Last 2 bits  | Merge bits | Next 2 bits  |
+|--------------|------------|--------------|
+| 00           | 010        | 00           |
+| 00           | 010        | 01           |
+| 00           | 100        | 10           |
+| 01           | 001        | 00           |
+| 01           | 000        | 01           |
+| 01           | 000        | 10           |
+| 10           | 010        | 00           |
+| 10           | 000        | 01           |
+| 10           | 000        | 10           |
 
 ### Seeking and erasures
 When reading a Compact Disc, the DSP will behave as if it's reading
