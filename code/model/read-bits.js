@@ -742,6 +742,13 @@ async function main() {
             coeffs[b] = v
           }
         }
+        // Fairly certain the jqf.poly library is buggy, and that sometimes,
+        // it will result in the wrong evaluation. I've somewhat narrowed it
+        // down to when one of the recovery bytes have 0s in them, and I
+        // think the library is taking the wrong shortcut as a result, but
+        // I'm not exactly in the mood for fishing for this. This means this
+        // may rarely yield false negatives. Same with the C2 calculation
+        // below.
         const polynomial = poly.create(coeffs, gf)
         let e = 1
         for (let s = 0; s < 4; s++) {

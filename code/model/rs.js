@@ -60,6 +60,9 @@ function getGenerator(nsyms) {
    by the generator polynomial. The reminder of the division makes the parity bytes to append
    to the message. The math behind this is described here:
    https://en.wikipedia.org/wiki/Reed%E2%80%93Solomon_error_correction#Simple_encoding_procedure:_The_message_as_a_sequence_of_coefficients
+   However, note that the polynomial functions in jqr-poly are fairly buggy, and can produce
+   incorrect errors on some degenerated syndromes. There are other encoders below which will
+   produce correct results.
    */
 exports.encode = function (msg, nsyms) {
   const g = getGenerator(nsyms)
@@ -106,7 +109,7 @@ exports.encode_4 = function (msg) {
 // This is a systematic encoding matrix algorithm to compute C1, the same as with C2 below, simply
 // with a different matrix, according to a (32,28) encoder, with the parity bytes at the end.
 exports.encodeC1 = function (msg) {
-  if (msg.length > 28) {
+  if (msg.length !== 28) {
     throw Error('Invalid message length for C1')
   }
   const ret = new Array(4).fill(0)
@@ -129,7 +132,7 @@ exports.encodeC1 = function (msg) {
    https://en.wikipedia.org/wiki/Reed%E2%80%93Solomon_error_correction#Systematic_encoding_procedure:_The_message_as_an_initial_sequence_of_values
    */
 exports.encodeC2 = function (msg) {
-  if (msg.length > 24) {
+  if (msg.length !== 24) {
     throw Error('Invalid message length for C2')
   }
   const ret = new Array(4).fill(0)

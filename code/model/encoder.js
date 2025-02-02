@@ -299,7 +299,7 @@ class Encoder {
           const col = swizzledColumn[c]
           v.push(sectors[lin * 24 + col])
         }
-        const c1 = rs.encode(v, 4)
+        const c1 = rs.encodeC1(v)
         if (this.debug) {
           const hcoeffs = []
           for (let i = 0; i < v.length; i++) {
@@ -342,7 +342,7 @@ class Encoder {
             v.push(past[lin * 28 + c + ((c >= 12) ? 4 : 0)])
           }
         }
-        const c1 = rs.encode(v, 4)
+        const c1 = rs.encodeC1(v)
         if (this.debug) {
           const hcoeffs = []
           for (let i = 0; i < v.length; i++) {
