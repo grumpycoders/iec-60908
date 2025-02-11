@@ -552,3 +552,6 @@ project further and collaborate in an open source
 hardware project which would be able to generate
 Compact Disc bitstreams in real time, and at high
 speed, replacing CD lenses with electronics.
+
+Other directions this work might go would also be to look
+at the encoding of DVD and Blu-ray optical discs.
