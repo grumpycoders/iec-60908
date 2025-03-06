@@ -111,6 +111,9 @@ class Encoder {
     for (let s = 0; s < 59; s++) {
       const b = []
       for (let c = 0; c < 28; c++) {
+        // "Silence" means that C2 is 0xff, as it's an inverted value. So one
+        // silent row with audio + C2 has the following shape:
+        //   00 [ ... 12 bytes ... ] 00 ff ff ff ff 00 [ ... 12 bytes ... ] 00
         b[c] = ((c < 12) || (c > 15)) ? 0 : 0xff
       }
       this.pastData.enq(b)
