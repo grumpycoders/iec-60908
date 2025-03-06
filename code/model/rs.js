@@ -107,7 +107,8 @@ exports.encode_4 = function (msg) {
 }
 
 // This is a systematic encoding matrix algorithm to compute C1, the same as with C2 below, simply
-// with a different matrix, according to a (32,28) encoder, with the parity bytes at the end.
+// with a different matrix, according to a (32,28) encoder, with the parity bytes at the end. See
+// the encoder.js code to have a better understanding about why this may be beneficial to use.
 exports.encodeC1 = function (msg) {
   if (msg.length !== 28) {
     throw Error('Invalid message length for C1')
