@@ -1,7 +1,9 @@
 'use strict'
 
 // The jqr-* packages are buggy, but good enough for what we do here.
-// Error correction will not work properly with them.
+// Error correction will not work properly with them. Also sometimes
+// the generic encoder based off dynamic generators will badly pad the
+// output message. This comment is duplicated later in this file.
 const poly = require('jqr-poly')
 const gf = require('jqr-gf')
 
@@ -14,6 +16,13 @@ gf.sub = gf.add
    input bytes, and any number of parity bytes. The second one showcases how to do
    Reed-Solomon using a barrel-shifter, for a hardcoded 4 parity bytes. The third and
    fourth will be a matrix multiplication encoder, tuned specifically for C1 and C2.
+ */
+
+/* One important detail about these encoders is they all assume the input are bytes.
+   But technically, we could artificially inject the ERASURE symbol from the EMF lookup
+   table. If an erased symbol is encountered, then the encoder ought to generate erased
+   symbols on its output. This might be better handled from the top level caller however.
+   See encoder.js for more details.
  */
 
 // Generated using the genMatrices.py script
