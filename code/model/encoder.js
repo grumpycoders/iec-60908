@@ -4,6 +4,14 @@ const RingBuffer = require('ringbufferjs')
 const efm = require('./efm')
 const rs = require('./rs')
 
+/* Throughout the code, we will be referring to "lines" and "columns". One can see the
+   input stream as an infinite number of lines, spread over 24 columns. The encoder
+   will add a total of 8 columns using 2 Reed-Solomon ECCs. The mapping between input
+   column:line to the output column:line is a complex swizzle pattern, but it'd be even
+   more complicated to visualize it in a 1-dimensional manner instead of a 2-dimensional
+   one, hence this code using columns and lines as a sort of [X, Y] indexer.
+   */
+
 /* This code is extremely convoluted, mostly because of the specifications in the redbook,
    but also because we want to emit a straight bitstream while keeping as little state
    as possible, and be as real-time as possible, to match what one would get from a
