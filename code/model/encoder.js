@@ -173,7 +173,17 @@ class Encoder {
          computes itself over C2, and since C1 has a delay of either 0 or 1, depending
          on the parity of the column, we compute C2 an additional 2 times, for the
          two columns of C2 that C1 will use that have a delay of 1. Then, we compute C1
-         twice, once with a delay of 1, and once with a delay of 0 */
+         twice, once with a delay of 1, and once with a delay of 0. */
+
+      /* Note that rs.js provides three methods to compute Reed-Solomon. The C1/C2 variants
+         are using matrix multiplications with static vectors for each column of Reed-Solomon.
+         This means that each entry in the output vector becomes completely independant,
+         unlike the barrel shifter method in the "4" variant which requires knowing all the
+         columns at all times, but doesn't need static vectors to function. While we are
+         computing C2 and C1 a great number of times, we only care about one or two output
+         columns at a time. This means that the Reed-Solomon computation can be sped up by
+         further specializing the C1 and C2 variants into only computing the relevant
+         output columns in the final vector. */
 
       /* The ECC for both C1 and C2 look a bit in the past, so grab them. This should
          really be a direct lookup inside of a normal ring buffer, but this isn't how
