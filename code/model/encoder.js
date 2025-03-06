@@ -96,12 +96,6 @@ class Encoder {
     // the subchannel queue ought to be 2 * 96 = 192 bytes, and the past data
     // queue ought to be 59 * 28 = 1652 symbols.
 
-    // To be even faster when restarting the encoder, instead of having to fill
-    // in 3 sectors worth of data, we could also just emit ERASURE symbols for
-    // "future data not yet present". This means the C1/C2 encoders become more
-    // complex however, as they need to be able to recognize they have erasures
-    // as input, and emit erasures as output.
-
     this.counter = 0
     this.debug = false
     /* Adding silence as past data. This could also be the ERASURE symbol. If we
