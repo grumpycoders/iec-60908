@@ -104,7 +104,16 @@ class Encoder {
 
     this.counter = 0
     this.debug = false
-    /* Adding silence as past data. This could also be the ERASURE symbol. */
+    /* Adding silence as past data. This could also be the ERASURE symbol. If we
+       need to restart the encoder quickly after a seek for instance, right now
+       we must feed 3 sectors worth of input data in order to ensure all the data
+       is safely encoded, as the DSP has to de-swizzle them. If we were to
+       immediately emit data from the get-go with silence as the prefix, then
+       the swizzled data will be incorrect as the ECCs will go over them. If
+       instead we emit erasures, and change the ECC encoder to emit erasures when
+       encountering an erasure as input, then this may force the DSP to discard
+       properly the data. All of this hasn't been tested yet.
+       */
     for (let s = 0; s < 59; s++) {
       const b = []
       for (let c = 0; c < 28; c++) {
