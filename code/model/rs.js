@@ -1,27 +1,27 @@
 'use strict'
 
 // The jqr-* packages are buggy, but good enough for what we do here.
-// Error correction will not work properly with them. Also sometimes
+// Error correction will not work properly with them. Also, sometimes
 // the generic encoder based off dynamic generators will badly pad the
 // output message. This comment is duplicated later in this file.
 const poly = require('jqr-poly')
 const gf = require('jqr-gf')
 
 // The division will try to call sub from the field, but it's not defined.
-// Luckily, it's easy to remedy to this problem.
+// Luckily, it's easy to remedy this problem.
 gf.sub = gf.add
 
 /* This code provides four Reed Solomon encoders. One very generic, that will output
-   parity bytes that belong at at the end of the input stream, for any number of
+   parity bytes that belong at the end of the input stream, for any number of
    input bytes, and any number of parity bytes. The second one showcases how to do
    Reed-Solomon using a barrel-shifter, for a hardcoded 4 parity bytes. The third and
    fourth will be a matrix multiplication encoder, tuned specifically for C1 and C2.
  */
 
-/* One important detail about these encoders is they all assume the input are bytes.
+/* One important detail about these encoders is they all assume the inputs are bytes.
    But technically, we could artificially inject the ERASURE symbol from the EMF lookup
    table. If an erased symbol is encountered, then the encoder ought to generate erased
-   symbols on its output. This might be better handled from the top level caller however.
+   symbols on its output. This might be better handled from the top level caller, however.
    See encoder.js for more details.
  */
 
@@ -45,7 +45,7 @@ const c2s = [
 ]
 
 /* Generic Reed Solomon creates a generator polynomial based on the number of parity bytes. Meaning
-   we can cache it after generating it, and save cycles every time we want to encode another ECC. */
+   we can cache it after generating it and save cycles every time we want to encode another ECC. */
 
 const cachedGenerators = []
 
@@ -66,7 +66,7 @@ function getGenerator(nsyms) {
 }
 
 /* The generic encoder simply generates a polynomial out of the message to encode, and divide it
-   by the generator polynomial. The reminder of the division makes the parity bytes to append
+   by the generator polynomial. The remainder of the division makes the parity bytes to append
    to the message. The math behind this is described here:
    https://en.wikipedia.org/wiki/Reed%E2%80%93Solomon_error_correction#Simple_encoding_procedure:_The_message_as_a_sequence_of_coefficients
    However, note that the polynomial functions in jqr-poly are fairly buggy, and can produce
@@ -104,7 +104,7 @@ exports.encode_4 = function (msg) {
     if (c === 0) continue
     const lc = gf.log(c)
     // The modulo here is only to avoid overflow, as technically the input
-    // value to exp should be in the range of 0-255. But if the exponant
+    // value to exp should be in the range of 0-255. But if the exponent
     // table is precomputed with 512 values, then this is not needed.
     // This comment applies to the rest of the code as well.
     ret[0] = gf.add(ret[0], gf.exp((lc + 0x4b) % 255))

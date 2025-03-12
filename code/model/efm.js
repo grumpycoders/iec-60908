@@ -4,7 +4,7 @@ const { Transform } = require('stream')
 const util = require('util')
 
 /* The EFM encoder is a Stream Transform class that takes arrays of symbols as an input, and outputs bytes one
-   at a time. The symbols can be bytes, or the values S0, S1, and ERASURE. The output bytes are representing
+   at a time. The symbols can be bytes, or the values S0, S1, and ERASURE. The output bytes represent
    the bitstream in Little Endian. The encoder will automatically emit sync pattern every 33 input symbols,
    as well as merge bits. It is important to properly end the encoder once all input symbols have been given
    as input, in order to make sure the last bits are flushed out. The symbols S0 and S1 ought to only be used

@@ -2,13 +2,13 @@
 
 // This tool can be used to analyze the bitstream of a CD audio track and extract the sectors from it.
 
-// It needs a text file as input, which only contain the characters '0' and '1', representing
-// the pits and grooves of the CD. For example, the sync pattern of a CD frame is would be
+// It needs a text file as input, which only contains the characters '0' and '1', representing
+// the pits and grooves of the CD. For example, the sync pattern of a CD frame would be
 // represented as either 1111111111100000000000111 or 0000000000011111111111000. The text file
 // could be generated from another tool. The tool also provides a conversion function from a CSV
 // file from a logic analyzer, and to the expected text file format.
 
-// By default, the tool will output a PNG file with the bitstream, aliging the frames in rows, and
+// By default, the tool will output a PNG file with the bitstream, aligning the frames in rows, and
 // coloring the bits according to their type. The tool can also output various levels of logging
 // information, and the decoded sectors in a 2448-byte format, with subchannel information, or a
 // 2352-byte format, without the subchannels. If the sectors are detected to be data, the tool
@@ -330,7 +330,7 @@ async function main() {
 
     frameLog()
     frameLog('******** Analyzing frame ' + frameCounter + ' ********')
-    // First, we chop off the 24 first bits, hoping they are the frame sync.
+    // First, we chop off the first 24 bits, hoping they are the frame sync.
     const frameSync = frameCutter(frame, normalFrameSync)
     if (frameSync === normalFrameSync) {
       frameLog('Frame Sync: OK')
@@ -894,7 +894,7 @@ async function main() {
       // Now that C1 and C2 are finished processing, we can now gather the
       // data for the sector.
 
-      // This is A swizzling pattern for the data, but not the only valid one.
+      // This is a swizzling pattern for the data, but not the only valid one.
       // This one was chosen because it is straddling the buffer the least, but
       // dumping bitstreams from different discs manufactured by different means
       // will definitely yield different patterns. This is a row-column swizzling
