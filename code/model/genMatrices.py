@@ -129,7 +129,7 @@ def gf_poly_mul(p, q):
     # Pre-allocate the result array
     r = [0] * (len(p)+len(q)-1)
     # Compute the polynomial multiplication (just like the outer product of two vectors,
-    # we multiply each coefficients of p with all coefficients of q)
+    # we multiply each coefficient of p with all coefficients of q)
     for j in range(0, len(q)):
         for i in range(0, len(p)):
             # equivalent to: r[i + j] = gf_add(r[i+j], gf_mul(p[i], q[j]))
@@ -157,7 +157,7 @@ def gf_poly_div(dividend, divisor):
         # log(0) is undefined, so we need to avoid that case explicitly (and it's also a good optimization).
         if coef != 0:
             lc = gf_log[coef]
-            for j in inner_range:  # in synthetic division, we always skip the first coefficient of the divisior,
+            for j in inner_range:  # in synthetic division, we always skip the first coefficient of the divisor,
                 # because it's only used to normalize the dividend coefficient
                 if divisor[j] != 0:  # log(0) is undefined
                     d = divisor[j]
@@ -216,7 +216,7 @@ def rs_calc_syndromes(msg, nsym):
     '''Given the received codeword msg and the number of error correcting symbols (nsym), computes the syndromes polynomial.
     Mathematically, it's essentially equivalent to a Fourrier Transform (Chien search being the inverse).
     '''
-    # Note the "[0] +" : we add a 0 coefficient for the lowest degree (the constant). This effectively shifts the syndrome, and will shift every computations depending on the syndromes (such as the errors locator polynomial, errors evaluator polynomial, etc. but not the errors positions).
+    # Note the "[0] +" : we add a 0 coefficient for the lowest degree (the constant). This effectively shifts the syndrome and will shift every computation depending on the syndromes (such as the errors locator polynomial, errors evaluator polynomial, etc. but not the errors positions).
     # This is not necessary, you can adapt subsequent computations to start from 0 instead of skipping the first iteration (ie, the often seen range(1, n-k+1)),
     synd = [0] * nsym
     for i in range(0, nsym):
@@ -226,7 +226,7 @@ def rs_calc_syndromes(msg, nsym):
 
 
 def rs_forney_syndromes(synd, pos, nmess, nsym):
-    # Compute Forney syndromes, which computes a modified syndromes to compute only errors (erasures are trimmed out). Do not confuse this with Forney algorithm, which allows to correct the message based on the location of errors.
+    # Compute Forney syndromes, which computes a modified syndromes to compute only errors (erasures are trimmed out). Do not confuse this with Forney algorithm, which allows correcting the message based on the location of errors.
     # prepare the coefficient degree positions (instead of the erasures positions)
     erase_pos_reversed = [nmess-1-p for p in pos]
 
@@ -266,7 +266,7 @@ def rs_find_error_locator(synd, nsym, erase_loc=None, erase_count=0):
         old_loc = [1]
     # L = 0 # update flag variable, not needed here because we use an alternative equivalent way of checking if update is needed (but using the flag could potentially be faster depending on if using length(list) is taking linear time in your language, here in Python it's constant so it's as fast.
 
-    # Fix the syndrome shifting: when computing the syndrome, some implementations may prepend a 0 coefficient for the lowest degree term (the constant). This is a case of syndrome shifting, thus the syndrome will be bigger than the number of ecc symbols (I don't know what purpose serves this shifting). If that's the case, then we need to account for the syndrome shifting when we use the syndrome such as inside BM, by skipping those prepended coefficients.
+    # Fix the syndrome shifting: when computing the syndrome, some implementations may prepend a 0 coefficient for the lowest degree term (the constant). This is a case of syndrome shifting, thus the syndrome will be bigger than the number of ecc symbols (I don't know what purpose this shifting serves). If that's the case, then we need to account for the syndrome shifting when we use the syndrome such as inside BM, by skipping those prepended coefficients.
     # Another way to detect the shifting is to detect the 0 coefficients: by definition, a syndrome does not contain any 0 coefficient (except if there are no errors/erasures, in this case they are all 0). This however doesn't work with the modified Forney syndrome, which set to 0 the coefficients corresponding to erasures, leaving only the coefficients corresponding to errors.
     synd_shift = 0
     if len(synd) > nsym:
@@ -284,7 +284,7 @@ def rs_find_error_locator(synd, nsym, erase_loc=None, erase_count=0):
         # Compute the discrepancy Delta
         # Here is the close-to-the-books operation to compute the discrepancy Delta: it's a simple polynomial multiplication of error locator with the syndromes, and then we get the Kth element.
         # delta = gf_poly_mul(err_loc[::-1], synd)[K] # theoretically it should be gf_poly_add(synd[::-1], [1])[::-1] instead of just synd, but it seems it's not absolutely necessary to correctly decode.
-        # But this can be optimized: since we only need the Kth element, we don't need to compute the polynomial multiplication for any other element but the Kth. Thus to optimize, we compute the polymul only at the item we need, skipping the rest (avoiding a nested loop, thus we are linear time instead of quadratic).
+        # But this can be optimized: since we only need the Kth element, we don't need to compute the polynomial multiplication for any other element but the Kth. Thus, to optimize, we compute the polymul only at the item we need, skipping the rest (avoiding a nested loop, thus we are linear time instead of quadratic).
         # This optimization is actually described in several figures of the book "Algebraic codes for data transmission", Blahut, Richard E., 2003, Cambridge university press.
         delta = synd[K]
         for j in range(1, len(err_loc)):
@@ -429,7 +429,7 @@ def rs_correct_errata(msg_in, synd, err_pos):
         # store the magnitude for this error into the magnitude polynomial
         E[err_pos[i]] = magnitude
 
-    # Apply the correction of values to get our message corrected! (note that the ecc bytes also gets corrected!)
+    # Apply the correction of values to get our message corrected! (note that the ecc bytes also get corrected!)
     # (this isn't the Forney algorithm, we just apply the result of decoding here)
     # equivalent to Ci = Ri - Ei where Ci is the correct message, Ri the received (senseword) message, and Ei the errata magnitudes (minus is replaced by XOR since it's equivalent in GF(2^p)). So in fact here we substract from the received message the errors magnitude, which logically corrects the value to what it should be.
     msg_in = gf_poly_add(msg_in, E)
@@ -471,7 +471,7 @@ def rs_correct_msg(msg_in, nsym, erase_pos=None):
 
     # Find errors values and apply them to correct the message
     # compute errata evaluator and errata magnitude polynomials, then correct errors and erasures
-    # note that we here use the original syndrome, not the forney syndrome
+    # note that here we use the original syndrome, not the forney syndrome
     msg_out = rs_correct_errata(msg_out, synd, (erase_pos + err_pos))
     # (because we will correct both errors and erasures, so we need the full syndrome)
     # check if the final message is fully repaired

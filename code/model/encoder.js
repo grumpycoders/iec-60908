@@ -129,7 +129,7 @@ class Encoder {
      enough data has been gathered to do so. What this means is that data is always
      delayed, sometimes by quite a bit. But also, the ECC bytes will also cover past
      data, up to 59 data lines, or about half a sector. The encoder will fill past
-     sector data will audio silence for the purpose of the ECC encoder, but if that's
+     sector data with audio silence for the purpose of the ECC encoder, but if that's
      undesirable, it'd be recommended to discard at least the first 59 lines that come
      out of the encoder, which means 59*32=1888 bytes when using a raw file as an
      output file, or 4337 bytes when using the EFM encoder. A full sector out would
